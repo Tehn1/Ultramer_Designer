@@ -41,9 +41,9 @@ import itertools
 #Take 300 bp up and downstream of target from Ensembl for input
 #Generate all possible mutants
 print("Good "+now)
-WT ="CTCCAACTTTCTGTAGAAGATACCACCTCTCCAAATACCAAGCCGTGCCCACCTACTCCCACCACCCCAGAAACATCCCCTCCTCCTCCTCCTCCTCCTCCTTCATCTACTCCTTGTTCAGCTCACCTGACCCCCTCCTCCCTGTTCCCTTCCTCCCTGGAATCATCATCGGAACAGAAATTCTATAACTTTGTGATCCTCCACGCCAGGGCAGACGAACACATCGCCCTGCGGGTTCGGGAGAAGCTGGAGGCCCTTGGCGTGCCCGACGGGGCCACCTTCTGCGAGGATTTCCAGGTGCCGGGGCGCGGGGAGCTGAGCTGCCTGCAGGACGCCATAGACCACTCAGCTTTCATCATCCTACTTCTCACCTCCAACTTCGACTGTCGCCTGAGCCTGCACCAGGTGAACCAAGCCATGATGAGCAACCTCACGCGACAGGGGTCGCCAGACTGTGTCATCCCCTTCCTGCCCCTGGAGAGCTCCCCGGCCCAGCTCAGCTCCGACACGGCCAGCCTGCTCTCCGGGCTGGTGCGGCTGGACGAACACTCCCAGATCTTCGCCAGGAAGGTGGCCAACACCTTCAAGCCCCACAGGCTTCAG"
+WT ="CCCGCCTCGCTGCGGGACGTGGCCTACCAGGAAGCCGTCCGCACCCTCAGCTCCAGGGACGACCACCGGCTGGGGGAACTTCAGGATGAGGCCCGAAACCGGTGTGGGTGGGACATTGCTGGGGATCCAGGGAGCATCCGGACGCTCCAGTCCAATCTGGGCTGCCTCCCACCATCCTCGGCTTTGCCCTCTGGGACCAGGAGCCTCCCACGCCCCATTGACGGTGTTTCGGACTGGAGCCAAGGGTGCTCCCTGCGATCCACTGGCAGCCCTGCCTCCCTGGCCAGCAACTTGGAAATCAGCCAGTCCCCTACCATGCCCTTCCTCAGCCTGCACCGCAGCCCACATGGGCCCAGCAAGCTCTGTGACGACCCCCAGGCCAGCTTGGTGCCCGAGCCTGTCCCCGGTGGCTGCCAGGAGCCTGAGGAGATGAGCTGGCCGCCATCGGGGGAGATTGCCAGCCCACCAGAGCTGCCAAGCAGCCCACCTCCTGGGCTTCCCGAAGTGGCCCCAGATGCAACCTCCACTGGCCTCCCTGATACCCCCGCAGCTCCAGAAACCAGCACCAACTACCCAGTGGAGTGCACCGAGGGGTCTGCAGGCCCCCAGTCTCTC"
 MutPos=101
-MutRes="H"
+MutRes="AQAPT"
 MutList = []
 newseq = ""
 newseqs = []
@@ -63,19 +63,22 @@ for p in list(itertools.product(*MutList)):
     insert=""
 
 WTHits = []
+WTZeroes = []
 MutHits = []
+MutZeroes = []
 LabBatch = [AciI, AflII, AleI, BamHI, BbsI, BsrGI, BtsI, DpnI, EcoRI, HindIII, KpnI, MluI, NcoI, NdeI, NheI, NotI, PvuI, SbfI, SmaI, SpeI, XmaI]
 
 #WT Restriction Analysis
 WT = Seq(WT)
 
 #Change here to switch between in-lab enzymes and common commercial enzymes
-rb = RestrictionBatch(CommOnly)
-##rb = RestrictionBatch(LabBatch)
+##rb = RestrictionBatch(CommOnly)
+rb = RestrictionBatch(LabBatch)
 
 WTAna = Analysis(rb, WT, linear=True)
 for item in WTAna.full():
     if len(WTAna.full()[item]) == 1: WTHits.append(item)
+    if len(WTAna.full()[item]) == 0: WTZeroes.append(item)
 
 #Analysis of mutants
 #Identify enzymes which cut only once in one sequence and not at all in the other
@@ -87,18 +90,20 @@ for seq in newseqs:
     MutAna = Analysis(rb, Mut, linear=True)
     for item in MutAna.full():
         if len(MutAna.full()[item]) == 1: MutHits.append(item)
+        if len(MutAna.full()[item]) == 0: MutZeroes.append(item)
     for item in WTHits:
-        if (item not in MutHits) and (MutAna.full()[item] == 0):
+        if item in MutZeroes:
             print("*")
             print(item)
             print(WT)
             print(Mut)
             print(item.site)
     for item in MutHits:
-        if item not in WTHits:
+        if item in WTZeroes:
             print("*")
             print(item)
             print(WT)
             print(Mut)
             print(item.site)
     MutHits = []
+    MutZeroes = []
